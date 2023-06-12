@@ -2,6 +2,59 @@ from ids_peak import ids_peak
 from ids_peak_ipl import ids_peak_ipl
 from ids_peak import ids_peak_ipl_extension
 
+All_Pixel_Formats = dict()
+All_Pixel_Formats.update(
+    PixelFormatName_BayerBG10 = 17825807,
+    PixelFormatName_BayerBG10g40IDS = 1073741828,
+    PixelFormatName_BayerBG10p = 17432658,
+    PixelFormatName_BayerBG12 = 17825811,
+    PixelFormatName_BayerBG12g24IDS = 1073741844,
+    PixelFormatName_BayerBG12p = 17563731,
+    PixelFormatName_BayerBG8 = 17301515,
+    PixelFormatName_BayerGB10 = 17825806,
+    PixelFormatName_BayerGB10g40IDS = 1073741826,
+    PixelFormatName_BayerGB10p = 17432660,
+    PixelFormatName_BayerGB12 = 17825810,
+    PixelFormatName_BayerGB12g24IDS = 1073741842,
+    PixelFormatName_BayerGB12p = 17563733,
+    PixelFormatName_BayerGB8 = 17301514,
+    PixelFormatName_BayerGR10 = 17825804,
+    PixelFormatName_BayerGR10g40IDS = 1073741827,
+    PixelFormatName_BayerGR10p = 17432662,
+    PixelFormatName_BayerGR12 = 17825808,
+    PixelFormatName_BayerGR12g24IDS = 1073741843,
+    PixelFormatName_BayerGR12p = 17563735,
+    PixelFormatName_BayerGR8 = 17301512,
+    PixelFormatName_BayerRG10 = 17825805,
+    PixelFormatName_BayerRG10g40IDS = 1073741825,
+    PixelFormatName_BayerRG10p = 17432664,
+    PixelFormatName_BayerRG12 = 17825809,
+    PixelFormatName_BayerRG12g24IDS = 1073741841,
+    PixelFormatName_BayerRG12p = 17563737,
+    PixelFormatName_BayerRG8 = 17301513,
+    PixelFormatName_BGR10 = 36700185,
+    PixelFormatName_BGR10p32 = 35651614,
+    PixelFormatName_BGR12 = 36700187,
+    PixelFormatName_BGR8 = 35127317,
+    PixelFormatName_BGRa10 = 37748812,
+    PixelFormatName_BGRa12 = 37748814,
+    PixelFormatName_BGRa8 = 35651607,
+    PixelFormatName_Invalid = 0,
+    PixelFormatName_Mono10 = 17825795,
+    PixelFormatName_Mono10g40IDS = 1073741839,
+    PixelFormatName_Mono10p = 17432646,
+    PixelFormatName_Mono12 = 17825797,
+    PixelFormatName_Mono12g24IDS = 1073741855,
+    PixelFormatName_Mono12p = 17563719,
+    PixelFormatName_Mono8 = 17301505,
+    PixelFormatName_RGB10 = 36700184,
+    PixelFormatName_RGB10p32 = 35651613,
+    PixelFormatName_RGB12 = 36700186,
+    PixelFormatName_RGB8 = 35127316,
+    PixelFormatName_RGBa10 = 37748831,
+    PixelFormatName_RGBa12 = 37748833,
+    PixelFormatName_RGBa8 = 35651606
+            )
 
 class IDSCamera(object):
     """IDS Camera interface, keeping all memory and low level bus management opaque
@@ -12,6 +65,7 @@ class IDSCamera(object):
 
         self.__acquisition_ready = False
         self.__pixel_format = ids_peak_ipl.PixelFormatName_Mono12
+        self.__inner_pixel_format = ids_peak_ipl.PixelFormatName_Mono12g24IDS  # or Mono10g40IDS
         self.__resolution = None
 
         self.__create_device_manager()
@@ -31,7 +85,7 @@ class IDSCamera(object):
             self.__destroy()
             raise ids_peak.NotFoundException("No devices found!")
 
-    def __setup_data_stream(self, idx=0):
+    def __setup_data_stream(self, idx=0, print_formats=False):
         device = self.__devices[idx]
         datastreams = device.DataStreams()
 
@@ -46,10 +100,23 @@ class IDSCamera(object):
             nodemap_remote_device.FindNode("UserSetSelector").SetCurrentEntry("Default")
             nodemap_remote_device.FindNode("UserSetLoad").Execute()
             nodemap_remote_device.FindNode("UserSetLoad").WaitUntilDone()
-            nodemap_remote_device.FindNode("PixelFormat").SetCurrentEntry(ids_peak_ipl.PixelFormatName_Mono12g24IDS)
+            nodemap_remote_device.FindNode("PixelFormat").SetCurrentEntry(self.__inner_pixel_format)
         except ids_peak.Exception:
             # Userset is not available
             pass
+
+
+
+        if print_formats:
+            print(f"{device.ModelName()} : {device.SerialNumber()} : ")
+            for k, v in All_Pixel_Formats.items():
+                try:
+                    nodemap_remote_device.FindNode("PixelFormat").SetCurrentEntry(v)
+                    print(f"    {k}: Success  < ---------------------------")
+                except:
+                    print(f"    {k}: Failed")
+
+
         self.__datastreams.append(datastream)
         self.__nodemap_remote_devices.append(nodemap_remote_device)
         payload_size = nodemap_remote_device.FindNode("PayloadSize").Value()
@@ -204,6 +271,7 @@ class IDSCamera(object):
 
     def set_pixel_format(self, kind, idx=0):
         """Selecciona el format en què es guardaran les imatges."""
+        self.__inner_pixel_format = ids_peak_ipl.PixelFormatName_Mono8  #  12g24IDS
         if kind == "BGRa8":
             self.__pixel_format = ids_peak_ipl.PixelFormatName_BGRa8
         elif kind == "BGRa10":
