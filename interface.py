@@ -106,7 +106,7 @@ class IDSCamera(object):
             # Userset is not available
             pass
 
-        if print_formats or True:
+        if print_formats:
             currPxForm = nodemap_remote_device.FindNode(
                 "PixelFormat").CurrentEntry().StringValue()
             print(currPxForm)
