@@ -65,7 +65,6 @@ class IDSCamera(object):
 
         self.__acquisition_ready = False
         self.__pixel_format = ids_peak_ipl.PixelFormatName_Mono12
-        self.__inner_pixel_format = ids_peak_ipl.PixelFormatName_Mono12g24IDS  # or Mono10g40IDS
         self.__resolution = None
 
         self.__create_device_manager()
@@ -100,33 +99,31 @@ class IDSCamera(object):
             nodemap_remote_device.FindNode("UserSetSelector").SetCurrentEntry("Default")
             nodemap_remote_device.FindNode("UserSetLoad").Execute()
             nodemap_remote_device.FindNode("UserSetLoad").WaitUntilDone()
-            nodemap_remote_device.FindNode("PixelFormat").SetCurrentEntry(self.__inner_pixel_format)
+            if self.__pixel_format == ids_peak_ipl.PixelFormatName_Mono12:
+                nodemap_remote_device.FindNode("PixelFormat").SetCurrentEntry(
+                                            ids_peak_ipl.PixelFormatName_Mono12g24IDS)
         except ids_peak.Exception:
             # Userset is not available
             pass
 
-
-
-        if print_formats:
-
-            # pxForms = [x.StringValue() for x in
-            #            nodemap_remote_device.FindNode("PixelFormat").Entries()]
-            # print(f"device.ModelName()")
-            # for pxForm in pxForms:
-            #     try:
-            #         nodemap_remote_device.FindNode("PixelFormat").SetCurrentEntry(pxForm)
-            #         print(f"   {pxForm}: Success")
-            #     except:
-            #         print(f"    {pxForm}: Failed")
-
-            print(f"{device.ModelName()} : {device.SerialNumber()} : ")
-            for k, v in All_Pixel_Formats.items():
+        if print_formats or True:
+            currPxForm = nodemap_remote_device.FindNode(
+                "PixelFormat").CurrentEntry().StringValue()
+            print(currPxForm)
+            pxForms = {x.StringValue(): x.Value() for x in
+                       nodemap_remote_device.FindNode("PixelFormat").Entries()}
+            # pxForms = All_Pixel_Formats
+            print(f"Device: {device.ModelName()}  S/N-{device.SerialNumber()} ")
+            for k, v in pxForms.items():
                 try:
                     nodemap_remote_device.FindNode("PixelFormat").SetCurrentEntry(v)
                     print(f"    {k}: Success  < ---------------------------")
                 except:
                     print(f"    {k}: Failed")
 
+            # Return to original pixel format
+            nodemap_remote_device.FindNode("PixelFormat").SetCurrentEntry(currPxForm)
+            print(nodemap_remote_device.FindNode("PixelFormat").CurrentEntry().StringValue())
 
         self.__datastreams.append(datastream)
         self.__nodemap_remote_devices.append(nodemap_remote_device)
@@ -190,8 +187,24 @@ class IDSCamera(object):
         idx = len(self.__devices) - 1
         self.__setup_data_stream(idx=idx)
 
+    def set_gain(self, gain: float, idx=0):
+        """Intenta configurar les imatges per segon que la càmera capturarà, fins el màxim establert
+        per la pròpia càmera."""
+        nodemap_remote_device = self.__nodemap_remote_devices[idx]
+        try:
+            target_gain = max(gain, 1)  # must be greater than or equal 1
+            nodemap_remote_device.FindNode("Gain").SetValue(target_gain)
+        except ids_peak.Exception as e:
+            raise e
+
     def get_gain(self, idx=0):
-        pass
+        """Retorna els fps actuals amb els què treballa la càmera."""
+        nodemap_remote_device = self.__nodemap_remote_devices[idx]
+        try:
+            current_gain = nodemap_remote_device.FindNode("Gain").Value()
+        except ids_peak.Exception as e:
+            raise e
+        return current_gain
 
     def set_fps(self, fps: float, idx=0):
         """Intenta configurar les imatges per segon que la càmera capturarà, fins el màxim establert
@@ -294,7 +307,6 @@ class IDSCamera(object):
             self.__pixel_format = ids_peak_ipl.PixelFormatName_Mono10
         elif kind == "Mono12":
             self.__pixel_format = ids_peak_ipl.PixelFormatName_Mono12
-            self.__inner_pixel_format = ids_peak_ipl.PixelFormatName_Mono12g24IDS
         elif kind == "BayerRG8":
             self.__pixel_format = ids_peak_ipl.PixelFormatName_BayerRG8
         elif kind == "BayerRG10":
@@ -326,6 +338,8 @@ class IDSCamera(object):
         elif kind == "BGR12":
             self.__pixel_format = ids_peak_ipl.PixelFormatName_BGR12
 
+
+
     def capture(self, idx=0, binning=1):
         if not self.__acquisition_ready:
             raise RuntimeError("Acquisition not ready")
@@ -343,7 +357,10 @@ class IDSCamera(object):
         # if self.__pixel_format == ids_peak_ipl.PixelFormatName_Mono12:
         #     image_array = converted_image.get_numpy_2D_16().copy()
         # else:
-        image_array = converted_image.get_numpy_2D_16().copy()
+        converter = (converted_image.get_numpy_2D
+                     if converted_image.PixelFormat().NumSignificantBitsPerChannel() <= 8
+                     else converted_image.get_numpy_2D_16)
+        image_array = converter().copy()
         # print(image_array.shape, image_array.dtype)
 
         # if self.__pixel_format == ids_peak_ipl.PixelFormatName_Mono12p:

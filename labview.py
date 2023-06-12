@@ -53,16 +53,6 @@ def capture(cam_id=0, binning=1):
     global roi
     image = IDS_interface_Obj.capture(cam_id)[::binning, ::binning]
 
-    # image1 = image_array[:, ::2]
-    # image2 = image_array[:, 1::2]
-
-    # image1_aux = np.unpackbits(image1, axis=1)
-    # image1_aux2 = np.zeros_like(image1_aux)
-    # image1_aux2[:, :] = image1_aux[:, ::-1]
-    # image1 = np.packbits(image1_aux2, axis=1)
-
-    # image = image1 + (image2.astype(np.uint16)+1) * 2**8
-
     if roi is not None:
         roix, roiy, roiw, roih = roi
         image = image[roiy:roiy+roih, roix:roix+roiw]
@@ -93,7 +83,11 @@ def set_roi(roix, roiy, roiw, roih):
 
 
 if __name__ == "__main__":
-    init(True)
+    import matplotlib.pyplot as plt
+    init(is16bits=True)
     start(0)
     image = capture(0)
-    print(image.shape)
+    plt.figure()
+    plt.imshow(image)
+    plt.colorbar()
+    plt.show()

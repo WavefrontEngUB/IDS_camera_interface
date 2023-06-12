@@ -15,12 +15,12 @@ def main():
         camID = 0
     else:
         camID = input("Choose camera: ")
-    # En seleccionem el primer
-    # for id in range(10):
-    #     print(id)
-    #     try:
+
+    # Seleccionem la imatge de sortida
+    mode = "Mono12"
+    camera.set_pixel_format(mode)
+
     camera.select_device(int(camID))
-        # except:
 
     # Seleccionem els fps
     camera.set_fps(1000)
@@ -28,17 +28,14 @@ def main():
     # Seleccionem el temps d'exposició, en us
     camera.set_exposure_time(13*1000) # 10 us minimum
     print(f"Exposure: {camera.get_exposure_time():.4g} us")
-    # Seleccionem la imatge de sortida
-    mode = "Mono12"
-    camera.set_pixel_format(mode)
     # En mirem la resolució
     width, height = camera.get_resolution()
     print(f"Resoltion: {width}x{height}")
     # Comencem l'adquisició, que bloqueja canvis "crítics" en la càmera
     camera.start_acquisition()
     # Capturem imatges
-    # camera.set_gain(1)
-    print(f" ->  {camera.get_gain()}")
+    # camera.set_gain(2)
+    print(f"Gain:  {camera.get_gain()}")
     # image = np.zeros((height, width), dtype=np.uint16)
     image_array = camera.capture()
 
