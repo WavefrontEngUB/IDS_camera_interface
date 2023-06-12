@@ -90,3 +90,10 @@ def set_fps(fps, cam_id=0):
 def set_roi(roix, roiy, roiw, roih):
     global roi
     roi = (roix, roiy, roiw, roih)
+
+
+if __name__ == "__main__":
+    init(True)
+    start(0)
+    image = capture(0)
+    print(image.shape)

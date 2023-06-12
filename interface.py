@@ -108,6 +108,17 @@ class IDSCamera(object):
 
 
         if print_formats:
+
+            # pxForms = [x.StringValue() for x in
+            #            nodemap_remote_device.FindNode("PixelFormat").Entries()]
+            # print(f"device.ModelName()")
+            # for pxForm in pxForms:
+            #     try:
+            #         nodemap_remote_device.FindNode("PixelFormat").SetCurrentEntry(pxForm)
+            #         print(f"   {pxForm}: Success")
+            #     except:
+            #         print(f"    {pxForm}: Failed")
+
             print(f"{device.ModelName()} : {device.SerialNumber()} : ")
             for k, v in All_Pixel_Formats.items():
                 try:
@@ -271,7 +282,6 @@ class IDSCamera(object):
 
     def set_pixel_format(self, kind, idx=0):
         """Selecciona el format en què es guardaran les imatges."""
-        self.__inner_pixel_format = ids_peak_ipl.PixelFormatName_Mono8  #  12g24IDS
         if kind == "BGRa8":
             self.__pixel_format = ids_peak_ipl.PixelFormatName_BGRa8
         elif kind == "BGRa10":
@@ -284,6 +294,7 @@ class IDSCamera(object):
             self.__pixel_format = ids_peak_ipl.PixelFormatName_Mono10
         elif kind == "Mono12":
             self.__pixel_format = ids_peak_ipl.PixelFormatName_Mono12
+            self.__inner_pixel_format = ids_peak_ipl.PixelFormatName_Mono12g24IDS
         elif kind == "BayerRG8":
             self.__pixel_format = ids_peak_ipl.PixelFormatName_BayerRG8
         elif kind == "BayerRG10":
@@ -314,8 +325,6 @@ class IDSCamera(object):
             self.__pixel_format = ids_peak_ipl.PixelFormatName_BGR10
         elif kind == "BGR12":
             self.__pixel_format = ids_peak_ipl.PixelFormatName_BGR12
-        elif kind == 'Mono12p':
-            self.__pixel_format = ids_peak_ipl.PixelFormatName_Mono12p
 
     def capture(self, idx=0, binning=1):
         if not self.__acquisition_ready:
