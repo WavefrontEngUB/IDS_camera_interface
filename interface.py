@@ -64,7 +64,7 @@ class IDSCamera(object):
         ids_peak.Library.Initialize()
 
         self.__acquisition_ready = False
-        self.__pixel_format = ids_peak_ipl.PixelFormatName_Mono12
+        self.__pixel_format = None
         self.__resolution = None
 
         self.__create_device_manager()
@@ -99,9 +99,6 @@ class IDSCamera(object):
             nodemap_remote_device.FindNode("UserSetSelector").SetCurrentEntry("Default")
             nodemap_remote_device.FindNode("UserSetLoad").Execute()
             nodemap_remote_device.FindNode("UserSetLoad").WaitUntilDone()
-            if self.__pixel_format == ids_peak_ipl.PixelFormatName_Mono12:
-                nodemap_remote_device.FindNode("PixelFormat").SetCurrentEntry(
-                                            ids_peak_ipl.PixelFormatName_Mono12g24IDS)
         except ids_peak.Exception:
             # Userset is not available
             pass
@@ -109,7 +106,6 @@ class IDSCamera(object):
         if print_formats:
             currPxForm = nodemap_remote_device.FindNode(
                 "PixelFormat").CurrentEntry().StringValue()
-            print(currPxForm)
             pxForms = {x.StringValue(): x.Value() for x in
                        nodemap_remote_device.FindNode("PixelFormat").Entries()}
             # pxForms = All_Pixel_Formats
@@ -120,10 +116,20 @@ class IDSCamera(object):
                     print(f"    {k}: Success  < ---------------------------")
                 except:
                     print(f"    {k}: Failed")
-
             # Return to original pixel format
             nodemap_remote_device.FindNode("PixelFormat").SetCurrentEntry(currPxForm)
-            print(nodemap_remote_device.FindNode("PixelFormat").CurrentEntry().StringValue())
+
+        if self.__pixel_format:
+            if self.__pixel_format == ids_peak_ipl.PixelFormatName_Mono12:
+                try:
+                    nodemap_remote_device.FindNode("PixelFormat").SetCurrentEntry(
+                        ids_peak_ipl.PixelFormatName_Mono12g24IDS)
+                except:
+                    raise RuntimeError(f"Pixel format not supported by this device.\n\n"
+                                       f"Run IDSCamera.__setup_data_stream(idx={idx}, "
+                                       f"print_formats=True) to see available formats.")
+        else:
+            raise RuntimeError("Set pixel format before select_device() method")
 
         self.__datastreams.append(datastream)
         self.__nodemap_remote_devices.append(nodemap_remote_device)
@@ -340,34 +346,34 @@ class IDSCamera(object):
 
 
 
-    def capture(self, idx=0, binning=1):
+    def capture(self, idx=0, binning=1, force8bit=False):
         if not self.__acquisition_ready:
             raise RuntimeError("Acquisition not ready")
-        
-        nodemap_remote_device = self.__nodemap_remote_devices[idx]
+
         datastream = self.__datastreams[idx]
         # Recuperem el buffer directament de la càmera
         buff = datastream.WaitForFinishedBuffer(500)
+
         # Recuperem la imatge i fem debayering si cal
         ipl_image = ids_peak_ipl_extension.BufferToImage(buff)
+        if not self.__pixel_format:
+            raise RuntimeError("Pixel format not selected")
         converted_image = ipl_image.ConvertTo(self.__pixel_format)
+
         # Indiquem que el búffer es pot tornar a utilitzar
         datastream.QueueBuffer(buff)
-        # Retornem la imatge en format numpy
-        # if self.__pixel_format == ids_peak_ipl.PixelFormatName_Mono12:
-        #     image_array = converted_image.get_numpy_2D_16().copy()
-        # else:
-        converter = (converted_image.get_numpy_2D
-                     if converted_image.PixelFormat().NumSignificantBitsPerChannel() <= 8
-                     else converted_image.get_numpy_2D_16)
-        image_array = converter().copy()
-        # print(image_array.shape, image_array.dtype)
 
-        # if self.__pixel_format == ids_peak_ipl.PixelFormatName_Mono12p:
-        #     image = image_array[:, ::2].astype('uint16')
-        #     image += image_array[:, 1::2]*2**8
-        # else:
-        #     image = image_array
+        # Retornem la imatge en format numpy amb les dimensions correctes
+        inner_pixel_format = converted_image.PixelFormat()
+        if inner_pixel_format.NumChannels() == 1:
+            if inner_pixel_format.NumSignificantBitsPerChannel() <= 8 or force8bit:
+                converter = converted_image.get_numpy_2D
+            else:
+                converter = converted_image.get_numpy_2D_16
+        else:  # check this, not tested
+            converter = converted_image.get_numpy_3D
+        image_array = converter().copy()
+
         return image_array
 
     def __destroy(self):
