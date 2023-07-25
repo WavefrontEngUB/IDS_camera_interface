@@ -37,6 +37,7 @@ def init(is16bits=False):
 def start(cam_id=0, exposure_ms=1, fps=100):
     if cam_id == -1:
         return 1, 1, 1, 1  # Dummy values
+
     # Comencem l'adquisició, que bloqueja canvis "crítics" en la càmera
     global IDS_interface_Obj
 
@@ -59,7 +60,7 @@ def start(cam_id=0, exposure_ms=1, fps=100):
 
 def capture(cam_id=0, binning=1, use_roi=False):
     if cam_id == -1:
-        return np.zeros((100, 100), dtype=np.uint16)  # Dummy values
+        return np.random.randint(0, 2**16, (100, 100), np.uint16)  # Dummy values
     # Capturem imatges
     global IDS_interface_Obj
     global roi
@@ -77,11 +78,13 @@ def stop():
     global IDS_interface_Obj
     IDS_interface_Obj.stop_acquisition()
 
-def set_exposure(exposure_ms, cam_id=0):
+def set_exposure(exposure_ms, cam_id=0, set_max_fps=True):
     if cam_id == -1:
         return 1, 1  # Dummy values
     global IDS_interface_Obj
     IDS_interface_Obj.set_exposure_time(exposure_ms*1000, cam_id)  # gets in um
+    if set_max_fps:
+        IDS_interface_Obj.set_max_fps(cam_id)
     return [IDS_interface_Obj.get_exposure_time(cam_id)/1000,  # in ms
             IDS_interface_Obj.get_fps(cam_id)]
 

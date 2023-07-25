@@ -141,8 +141,7 @@ class IDSCamera(object):
         self.__setup_data_stream(idx=idx)
 
     def set_gain(self, gain: float, idx=0):
-        """Intenta configurar les imatges per segon que la càmera capturarà, fins el màxim establert
-        per la pròpia càmera."""
+        """ Intenta configurar el gain de la càmera. """
         nodemap_remote_device = self.__nodemap_remote_devices[idx]
         try:
             target_gain = max(gain, 1)  # must be greater than or equal 1
@@ -151,7 +150,7 @@ class IDSCamera(object):
             raise e
 
     def get_gain(self, idx=0):
-        """Retorna els fps actuals amb els què treballa la càmera."""
+        """Retorna el gain actual amb què treballa la càmera. """
         nodemap_remote_device = self.__nodemap_remote_devices[idx]
         try:
             current_gain = nodemap_remote_device.FindNode("Gain").Value()
@@ -181,6 +180,17 @@ class IDSCamera(object):
         except ids_peak.Exception as e:
             raise e
         return current_fps
+
+    def set_max_fps(self, idx=0):
+        """ Intenta configurar el fps màxim de la càmera. """
+        nodemap_remote_device = self.__nodemap_remote_devices[idx]
+        exp_time = self.get_exposure_time(idx=idx)
+        try:
+            max_fps = nodemap_remote_device.FindNode("AcquisitionFrameRate").Maximum()
+            target_fps = min(1e6/exp_time, max_fps)
+            nodemap_remote_device.FindNode("AcquisitionFrameRate").SetValue(target_fps)
+        except ids_peak.Exception as e:
+            raise e
 
     def set_exposure_time(self, etime: float, idx=0):
         nodemap_remote_device = self.__nodemap_remote_devices[idx]
