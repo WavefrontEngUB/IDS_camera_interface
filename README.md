@@ -23,7 +23,7 @@ Open a terminal and move to this directory
 cd C:\Program Files\IDS\ids_peak\generic_sdk
 ```
 
-Now, check your python version with `python`. Also, check the bitness (32 or 64).`
+Now, check your python version with `python`. Also, check the bitness (32 or 64).
 
 *Note: If you want to use this API in the LabView environ, then you have to install it in the system python (not in a conda python).*
 
@@ -86,20 +86,10 @@ from interface import IDSCamera
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
+ the Free Software Foundation; check the License.txt for more details.
 
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- 02111-1307  USA
-
-  All comments concerning this program package may be sent to the
-  e-mail address 'dmaluenda@ub.edu'
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 *************************************************************************
