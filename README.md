@@ -60,24 +60,46 @@ the camera parameters printed in the terminal.
 
 ## IDS cameras python interface
 
-blablabla
+Easy example for just one camera
+
+     from interface import IDSinterface
+    
+     my_interface = IDSinterface()
+     my_interface.set_pixel_format(bit_rate=12, colorness="RGB")  # RGB12 (optional)
+     my_interface.select_and_start_device()  # Select the first device found and start acquisition
+     my_interface.set_fps(1000)  # Set the fps to 1000 (optional)
+     my_interface.set_exposure_time(1000*50)  # Set the exposure time to 50 ms (optional)
+     my_interface.set_gain()  # Set the gain to 1 (optional)
+     image = my_interface.capture()  # Capture an image as a numpy array
+     my_interface.stop()  # Stop the acquisition
+     del my_interface  # Close the interface and release the camera
+    
+If more than one camera is wired, every method has an optional argument 
+`idx` to select the camera to manage.
+
+      my_interface = IDSinterface()
+      # Exploring available devices
+      all_devices = my_interface.get_devices()
+      print(f"\nFound {len(all_devices)} devices:")
+      for idx, device in enumerate(all_devices):
+          print(f" > {idx} : {device.ModelName()}")
+
+      # Output:
+      $ Found 2 devices:
+      $  > 0 : U3-368xXLE-M
+      $  > 1 : U3-368xXLE-C
+
+      my_interface.select_and_start_device(idx=0)  # Select the first device found and start acquisition
+      my_interface.select_and_start_device(idx=1)  # Select the second device found and start acquisition
+      my_interface.set_pixel_format(bit_rate=8, idx=0)  # Seting 8 bit pixel format for the first camera
+      my_interface.set_exposure(1000*50, idx=1)  # Set the exposure time to 50 ms to the second camera
+      image0 = my_interface.capture(idx=0)  # Capture an image from the first camera
+      image1 = my_interface.capture(idx=1)  # Capture an image from the second camera
+
 
 ## IDS cameras LabView interface
 
 blablabla
-
-## Interfície per a càmeres IDS
-
-El script `interface.py` conté un wrapper de la API de IDS per a controlar les
-seves pròpies càmeres. D'aquesta forma, en facilitem la posada a punt i l'ús
-amb funcions de conveniència, que preparen la càmera automàticament per a la presa de
-dades. L'ús d'aquesta interfície és ben senzill, tal i com surt al script `test_camera.py`
-
-```python
-from interface import IDSCamera
-```
-
-
 
 
 **************************************************************************
