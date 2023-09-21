@@ -3,18 +3,20 @@ import numpy as np
 
 from interface import IDSCamera
 
+""" Do NOT USE this. It is old and it still under update. """
 
 def main(mode="Mono12", exposure_ms=1, fps=100):
     # Obrim la llibreria
     camera = IDSCamera()
     # Busquem dispositius disponibles
     cams = camera.get_devices()
-    for idx, device in enumerate(cams):
-        print(idx, device.ModelName())
-    if idx == 0:
-        camID = 0
+    if len(cams) > 1:
+        print(f"\nFound {len(cams)} devices:")
+        for idx, device in enumerate(cams):
+            print(f" > {idx} : {device.ModelName()}")
+        camID = int(input("\nChoose camera by id: "))
     else:
-        camID = input("Choose camera: ")
+        camID = 0
 
     # Seleccionem la imatge de sortida
     camera.set_pixel_format(mode)  # must be before selecting device

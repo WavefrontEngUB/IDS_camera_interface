@@ -3,6 +3,8 @@ import pygame
 
 pygame.init()
 
+""" Do NOT USE this. It is old and it still under update. """
+
 def main():
     # Obrim la llibreria
     camera = IDSCamera()
