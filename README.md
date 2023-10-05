@@ -101,6 +101,12 @@ If more than one camera is wired, every method has an optional argument
 
 blablabla
 
+## Requeriments
+
+numpy
+mqtplotlib
+imageio
+
 
 **************************************************************************
 

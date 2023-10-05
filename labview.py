@@ -13,7 +13,7 @@ roi = None
 ref = None
 
 def init(is16bits=False):
-    mode = "Mono12" if is16bits else "Mono8"
+    bitness = 12 if is16bits else 8
     # Obrim la llibreria
     global IDS_interface_Obj
     try:
@@ -28,8 +28,8 @@ def init(is16bits=False):
         devicesSerial.append(cam.SerialNumber())
         devicesName.append(cam.ModelName())
 
-    # Seleccionem la imatge de sortida
-    IDS_interface_Obj.set_pixel_format(mode)
+        # Seleccionem el bit depth, el mateix per totes les camares
+        IDS_interface_Obj.set_pixel_format(bitness, colorness="Mono", idx=camID)
 
     return devicesName, devicesSerial
 
