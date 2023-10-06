@@ -54,7 +54,7 @@ def start(cam_id=0, exposure_ms=1, fps=100):
     width, height = IDS_interface_Obj.get_resolution(cam_id)
 
     # Comencem l'adquisició, que bloqueja canvis "crítics" en la càmera
-    IDS_interface_Obj.start_acquisition()
+    IDS_interface_Obj.start_acquisition(cam_id)
 
     return width, height, true_fps, true_exposure
 
