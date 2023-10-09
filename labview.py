@@ -12,6 +12,7 @@ import json
 try:
     IDS_interface_Obj = interface.IDSCamera()
 except interface.ids_peak.NotFoundException:
+    import time
     IDS_interface_Obj = None
 
 roi = None
@@ -67,6 +68,7 @@ def capture(cam_id=0, binning=1, use_roi=False):
     global roi
 
     if IDS_interface_Obj is None:
+        time.sleep(0.01)
         return np.random.randint(0, 2**16, (100, 100), np.uint16)  # Dummy values
 
     image = IDS_interface_Obj.capture(cam_id)[::binning, ::binning]
