@@ -68,7 +68,7 @@ def capture(cam_id=0, binning=1, use_roi=False):
     global roi
 
     if IDS_interface_Obj is None:
-        time.sleep(0.01)
+        time.sleep(0.01)  # setting an effective FPS about 100
         return np.random.randint(0, 2**16, (100, 100), np.uint16)  # Dummy values
 
     image = IDS_interface_Obj.capture(cam_id)[::binning, ::binning]
