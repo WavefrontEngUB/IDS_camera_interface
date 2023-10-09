@@ -8,7 +8,12 @@ import matplotlib.pyplot as plt
 
 import json
 
-IDS_interface_Obj = None
+
+try:
+    IDS_interface_Obj = interface.IDSCamera()
+except interface.ids_peak.NotFoundException:
+    IDS_interface_Obj = None
+
 roi = None
 ref = None
 
@@ -16,9 +21,7 @@ def init(is16bits=False):
     bitness = 12 if is16bits else 8
     # Obrim la llibreria
     global IDS_interface_Obj
-    try:
-        IDS_interface_Obj = interface.IDSCamera()
-    except interface.ids_peak.NotFoundException:
+    if IDS_interface_Obj is None:
         return ["NotFound"], ["-1"]
 
     # Busquem dispositius disponibles
@@ -35,11 +38,11 @@ def init(is16bits=False):
 
 
 def start(cam_id=0, exposure_ms=1, fps=100):
-    if cam_id == -1:
-        return 1, 1, 1, 1  # Dummy values
-
     # Comencem l'adquisició, que bloqueja canvis "crítics" en la càmera
     global IDS_interface_Obj
+
+    if IDS_interface_Obj is None:
+        return 1, 1, 1, 1  # Dummy values
 
     IDS_interface_Obj.select_device(cam_id)
     # Seleccionem els fps
@@ -59,11 +62,13 @@ def start(cam_id=0, exposure_ms=1, fps=100):
     return width, height, true_fps, true_exposure
 
 def capture(cam_id=0, binning=1, use_roi=False):
-    if cam_id == -1:
-        return np.random.randint(0, 2**16, (100, 100), np.uint16)  # Dummy values
     # Capturem imatges
     global IDS_interface_Obj
     global roi
+
+    if IDS_interface_Obj is None:
+        return np.random.randint(0, 2**16, (100, 100), np.uint16)  # Dummy values
+
     image = IDS_interface_Obj.capture(cam_id)[::binning, ::binning]
 
     if roi is not None and use_roi:
@@ -76,29 +81,34 @@ def capture(cam_id=0, binning=1, use_roi=False):
 
 def stop():
     global IDS_interface_Obj
-    IDS_interface_Obj.stop_acquisition()
+    if IDS_interface_Obj is not None:
+        IDS_interface_Obj.stop_acquisition()
+
 
 def set_exposure(exposure_ms, cam_id=0, set_max_fps=True):
-    if cam_id == -1:
-        return 1, 1  # Dummy values
     global IDS_interface_Obj
+    if IDS_interface_Obj is None:
+        return 1, 1  # Dummy values
     IDS_interface_Obj.set_exposure_time(exposure_ms*1000, cam_id)  # gets in um
     if set_max_fps:
         IDS_interface_Obj.set_max_fps(cam_id)
     return [IDS_interface_Obj.get_exposure_time(cam_id)/1000,  # in ms
             IDS_interface_Obj.get_fps(cam_id)]
 
+
 def set_fps(fps, cam_id=0):
-    if cam_id == -1:
-        return 1, 1  # Dummy values
     global IDS_interface_Obj
+    if IDS_interface_Obj is None:
+        return 1, 1  # Dummy values
     IDS_interface_Obj.set_fps(fps, cam_id)
     return [IDS_interface_Obj.get_fps(cam_id),
             IDS_interface_Obj.get_exposure_time(cam_id)/1000]
 
+
 def set_roi(roix, roiy, roiw, roih):
     global roi
     roi = (roix, roiy, roiw, roih)
+
 
 def set_ref(refx, refy, refw, refh):
     global ref
