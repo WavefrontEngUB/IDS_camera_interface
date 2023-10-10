@@ -107,6 +107,15 @@ def set_fps(fps, cam_id=0):
             IDS_interface_Obj.get_exposure_time(cam_id)/1000]
 
 
+def set_gain(gain, cam_id=0):
+    global IDS_interface_Obj
+    if IDS_interface_Obj is None:
+        return 1, 1  # Dummy values
+    IDS_interface_Obj.set_gain(gain, cam_id)
+    return [IDS_interface_Obj.get_fps(cam_id),
+            IDS_interface_Obj.get_exposure_time(cam_id)/1000]
+
+
 def set_roi(roix, roiy, roiw, roih):
     global roi
     roi = (roix, roiy, roiw, roih)
