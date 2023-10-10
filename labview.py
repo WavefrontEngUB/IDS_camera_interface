@@ -23,7 +23,10 @@ def init(is16bits=False):
     # Obrim la llibreria
     global IDS_interface_Obj
     if IDS_interface_Obj is None:
-        return ["NotFound"], ["-1"]
+        cam_names = ["NotFound", "aaa", "bbb", "ccc"]
+        cam_serials = ["-1", "-2", "-3", "-4"]
+        NUM_OF_SIM_CAMERAS = 1  # set this just to test with different cameras
+        return cam_names[:NUM_OF_SIM_CAMERAS], cam_serials[:NUM_OF_SIM_CAMERAS]
 
     # Busquem dispositius disponibles
     devicesSerial = []
@@ -38,12 +41,12 @@ def init(is16bits=False):
     return devicesName, devicesSerial
 
 
-def start(cam_id=0, exposure_ms=1, fps=100):
+def start(cam_id=0, exposure_ms=1, fps=100, gain=0):
     # Comencem l'adquisició, que bloqueja canvis "crítics" en la càmera
     global IDS_interface_Obj
 
     if IDS_interface_Obj is None:
-        return 1, 1, 1, 1  # Dummy values
+        return 1, 1, fps, exposure_ms  # Dummy values
 
     IDS_interface_Obj.select_device(cam_id)
     # Seleccionem els fps
@@ -54,13 +57,17 @@ def start(cam_id=0, exposure_ms=1, fps=100):
     IDS_interface_Obj.set_exposure_time(exposure_ms*1000, cam_id)
     true_exposure = IDS_interface_Obj.get_exposure_time(cam_id)/1000  # in ms
 
+    # Seleccionem el gain
+    IDS_interface_Obj.set_gain(gain, cam_id)
+    true_gain = IDS_interface_Obj.get_gain(cam_id)
+
     # Mirem la resolució
     width, height = IDS_interface_Obj.get_resolution(cam_id)
 
     # Comencem l'adquisició, que bloqueja canvis "crítics" en la càmera
     IDS_interface_Obj.start_acquisition(cam_id)
 
-    return width, height, true_fps, true_exposure
+    return width, height, true_fps, true_exposure#, true_gain
 
 def capture(cam_id=0, binning=1, use_roi=False):
     # Capturem imatges
@@ -90,7 +97,8 @@ def stop():
 def set_exposure(exposure_ms, cam_id=0, set_max_fps=True):
     global IDS_interface_Obj
     if IDS_interface_Obj is None:
-        return 1, 1  # Dummy values
+        exposure_ms += 1e-12
+        return [exposure_ms, 1.e3/exposure_ms]  # Dummy values
     IDS_interface_Obj.set_exposure_time(exposure_ms*1000, cam_id)  # gets in um
     if set_max_fps:
         IDS_interface_Obj.set_max_fps(cam_id)
@@ -101,7 +109,8 @@ def set_exposure(exposure_ms, cam_id=0, set_max_fps=True):
 def set_fps(fps, cam_id=0):
     global IDS_interface_Obj
     if IDS_interface_Obj is None:
-        return 1, 1  # Dummy values
+        fps += 1e-12
+        return [fps, 1.e3/fps]  # Dummy values
     IDS_interface_Obj.set_fps(fps, cam_id)
     return [IDS_interface_Obj.get_fps(cam_id),
             IDS_interface_Obj.get_exposure_time(cam_id)/1000]
@@ -110,7 +119,7 @@ def set_fps(fps, cam_id=0):
 def set_gain(gain, cam_id=0):
     global IDS_interface_Obj
     if IDS_interface_Obj is None:
-        return 1, 1  # Dummy values
+        return [1., 1.]  # Dummy values
     IDS_interface_Obj.set_gain(gain, cam_id)
     return [IDS_interface_Obj.get_fps(cam_id),
             IDS_interface_Obj.get_exposure_time(cam_id)/1000]
