@@ -104,7 +104,7 @@ blablabla
 ## Requeriments
 
 numpy
-mqtplotlib
+matplotlib
 imageio
 
 
