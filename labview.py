@@ -8,18 +8,25 @@ import matplotlib.pyplot as plt
 
 import json
 
-IDS_interface_Obj = None
+
+try:
+    IDS_interface_Obj = interface.IDSCamera()
+except interface.ids_peak.NotFoundException:
+    import time
+    IDS_interface_Obj = None
+
 roi = None
 ref = None
 
 def init(is16bits=False):
-    mode = "Mono12" if is16bits else "Mono8"
+    bitness = 12 if is16bits else 8
     # Obrim la llibreria
     global IDS_interface_Obj
-    try:
-        IDS_interface_Obj = interface.IDSCamera()
-    except interface.ids_peak.NotFoundException:
-        return ["NotFound"], ["-1"]
+    if IDS_interface_Obj is None:
+        cam_names = ["NotFound", "aaa", "bbb", "ccc"]
+        cam_serials = ["-1", "-2", "-3", "-4"]
+        NUM_OF_SIM_CAMERAS = 1  # set this just to test with different cameras
+        return cam_names[:NUM_OF_SIM_CAMERAS], cam_serials[:NUM_OF_SIM_CAMERAS]
 
     # Busquem dispositius disponibles
     devicesSerial = []
@@ -28,18 +35,18 @@ def init(is16bits=False):
         devicesSerial.append(cam.SerialNumber())
         devicesName.append(cam.ModelName())
 
-    # Seleccionem la imatge de sortida
-    IDS_interface_Obj.set_pixel_format(mode)
+        # Seleccionem el bit depth, el mateix per totes les camares
+        IDS_interface_Obj.set_pixel_format(bitness, colorness="Mono", idx=camID)
 
     return devicesName, devicesSerial
 
 
-def start(cam_id=0, exposure_ms=1, fps=100):
-    if cam_id == -1:
-        return 1, 1, 1, 1  # Dummy values
-
+def start(cam_id=0, exposure_ms=1, fps=100, gain=0):
     # Comencem l'adquisició, que bloqueja canvis "crítics" en la càmera
     global IDS_interface_Obj
+
+    if IDS_interface_Obj is None:
+        return 1, 1, fps, exposure_ms  # Dummy values
 
     IDS_interface_Obj.select_device(cam_id)
     # Seleccionem els fps
@@ -50,20 +57,27 @@ def start(cam_id=0, exposure_ms=1, fps=100):
     IDS_interface_Obj.set_exposure_time(exposure_ms*1000, cam_id)
     true_exposure = IDS_interface_Obj.get_exposure_time(cam_id)/1000  # in ms
 
+    # Seleccionem el gain
+    IDS_interface_Obj.set_gain(gain, cam_id)
+    true_gain = IDS_interface_Obj.get_gain(cam_id)
+
     # Mirem la resolució
     width, height = IDS_interface_Obj.get_resolution(cam_id)
 
     # Comencem l'adquisició, que bloqueja canvis "crítics" en la càmera
-    IDS_interface_Obj.start_acquisition()
+    IDS_interface_Obj.start_acquisition(cam_id)
 
-    return width, height, true_fps, true_exposure
+    return width, height, true_fps, true_exposure#, true_gain
 
 def capture(cam_id=0, binning=1, use_roi=False):
-    if cam_id == -1:
-        return np.random.randint(0, 2**16, (100, 100), np.uint16)  # Dummy values
     # Capturem imatges
     global IDS_interface_Obj
     global roi
+
+    if IDS_interface_Obj is None:
+        time.sleep(0.01)  # setting an effective FPS about 100
+        return np.random.randint(0, 2**16, (100, 100), np.uint16)  # Dummy values
+
     image = IDS_interface_Obj.capture(cam_id)[::binning, ::binning]
 
     if roi is not None and use_roi:
@@ -76,29 +90,45 @@ def capture(cam_id=0, binning=1, use_roi=False):
 
 def stop():
     global IDS_interface_Obj
-    IDS_interface_Obj.stop_acquisition()
+    if IDS_interface_Obj is not None:
+        IDS_interface_Obj.stop_acquisition()
+
 
 def set_exposure(exposure_ms, cam_id=0, set_max_fps=True):
-    if cam_id == -1:
-        return 1, 1  # Dummy values
     global IDS_interface_Obj
+    if IDS_interface_Obj is None:
+        exposure_ms += 1e-12
+        return [exposure_ms, 1.e3/exposure_ms]  # Dummy values
     IDS_interface_Obj.set_exposure_time(exposure_ms*1000, cam_id)  # gets in um
     if set_max_fps:
         IDS_interface_Obj.set_max_fps(cam_id)
     return [IDS_interface_Obj.get_exposure_time(cam_id)/1000,  # in ms
             IDS_interface_Obj.get_fps(cam_id)]
 
+
 def set_fps(fps, cam_id=0):
-    if cam_id == -1:
-        return 1, 1  # Dummy values
     global IDS_interface_Obj
+    if IDS_interface_Obj is None:
+        fps += 1e-12
+        return [fps, 1.e3/fps]  # Dummy values
     IDS_interface_Obj.set_fps(fps, cam_id)
     return [IDS_interface_Obj.get_fps(cam_id),
             IDS_interface_Obj.get_exposure_time(cam_id)/1000]
 
+
+def set_gain(gain, cam_id=0):
+    global IDS_interface_Obj
+    if IDS_interface_Obj is None:
+        return [1., 1.]  # Dummy values
+    IDS_interface_Obj.set_gain(gain, cam_id)
+    return [IDS_interface_Obj.get_fps(cam_id),
+            IDS_interface_Obj.get_exposure_time(cam_id)/1000]
+
+
 def set_roi(roix, roiy, roiw, roih):
     global roi
     roi = (roix, roiy, roiw, roih)
+
 
 def set_ref(refx, refy, refw, refh):
     global ref
