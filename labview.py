@@ -149,11 +149,11 @@ def save(image, filename, main_roi=None, ref_roi=None, bit_depth=16):
     image2save /= ref_mean
     image2save16 = (image2save * ref_max).astype(np.uint16)
 
-    # Save as PNG with imageio
-    crop_fn = filename.replace(".png", "_crop.png")
-    if os.path.isfile(crop_fn):
-        os.remove(crop_fn)
-    imageio.imwrite(crop_fn, image2save16)
+    # # Save as PNG with imageio
+    # crop_fn = filename.replace(".png", "_crop.png")
+    # if os.path.isfile(crop_fn):
+    #     os.remove(crop_fn)
+    # imageio.imwrite(crop_fn, image2save16)
 
     # Guardem la imatge com a numpy array
     if os.path.isfile(np_fn):
