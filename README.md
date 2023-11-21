@@ -120,5 +120,5 @@ imageio
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
- Check also the [LICENSE](https://raw.githubusercontent.com/WavefrontEngUB/IDS_camera_interface/main/LICENSE.txt) file.
+ Check also the [LICENSE](LICENSE.txt) file.
 *************************************************************************
