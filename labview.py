@@ -18,6 +18,11 @@ except interface.ids_peak.NotFoundException:
 roi = None
 ref = None
 
+KNOWN_CAMERAS = {  # 'S/N'   : "Friendly Name"
+                 '4104527767': "Focused",
+                 '4104401787': "Paraxial"
+                }
+
 def init(is16bits=False):
     bitness = 12 if is16bits else 8
     # Obrim la llibreria
@@ -32,8 +37,9 @@ def init(is16bits=False):
     devicesSerial = []
     devicesName = []
     for camID, cam in enumerate(IDS_interface_Obj.get_devices()):
-        devicesSerial.append(cam.SerialNumber())
-        devicesName.append(cam.ModelName())
+        ser_num = cam.SerialNumber()
+        devicesSerial.append(ser_num)
+        devicesName.append(KNOWN_CAMERAS.get(ser_num, cam.ModelName()))
 
         # Seleccionem el bit depth, el mateix per totes les camares
         IDS_interface_Obj.set_pixel_format(bitness, colorness="Mono", idx=camID)
